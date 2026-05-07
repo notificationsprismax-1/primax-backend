@@ -7,8 +7,7 @@ import dotenv from 'dotenv';
 import { addMinutes, addHours, isBefore, parseISO } from 'date-fns';
 import dns from 'dns';
 
-// Force Node.js to use IPv4 instead of IPv6 for Render compatibility
-dns.setDefaultResultOrder('ipv4first');
+// dns.setDefaultResultOrder('ipv4first'); // Disabled for Railway
 
 dotenv.config();
 
@@ -19,20 +18,18 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 // Initialize PostgreSQL Database
-const dbConfig = {
-  host: process.env.PGHOST,
-  port: process.env.PGPORT || 5432,
-  user: process.env.PGUSER || 'postgres',
-  password: process.env.PGPASSWORD,
-  database: process.env.PGDATABASE || 'railway'
-};
+const connectionString = process.env.TRUE_URL || process.env.DATABASE_URL;
 
-// Fallback to connectionString only if PGHOST is missing
-if (!process.env.PGHOST && process.env.DATABASE_URL) {
-  dbConfig.connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error("ERROR: No database URL found! Set TRUE_URL or DATABASE_URL.");
 }
 
-const pool = new Pool(dbConfig);
+const pool = new Pool({
+  connectionString,
+  ssl: connectionString && connectionString.includes('proxy.rlwy.net')
+    ? { rejectUnauthorized: false }
+    : false
+});
 
 pool.connect((err, client, release) => {
   if (err) {
