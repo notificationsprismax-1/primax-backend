@@ -19,14 +19,16 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 // Initialize PostgreSQL Database
-const dbConfig = {
-  ssl: {
-    rejectUnauthorized: false
-  }
-};
+const dbConfig = {};
 
 if (process.env.DATABASE_URL) {
   dbConfig.connectionString = process.env.DATABASE_URL;
+  try {
+    const parsed = new URL(process.env.DATABASE_URL);
+    console.log(`[DB DEBUG] Attempting to connect as user: "${parsed.username}" to host: "${parsed.hostname}"`);
+  } catch (e) {
+    console.log('[DB DEBUG] Failed to parse DATABASE_URL');
+  }
 }
 
 const pool = new Pool(dbConfig);
