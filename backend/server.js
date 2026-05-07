@@ -19,12 +19,17 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
 // Initialize PostgreSQL Database
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+const dbConfig = {
   ssl: {
     rejectUnauthorized: false
   }
-});
+};
+
+if (process.env.DATABASE_URL) {
+  dbConfig.connectionString = process.env.DATABASE_URL;
+}
+
+const pool = new Pool(dbConfig);
 
 pool.connect((err, client, release) => {
   if (err) {
